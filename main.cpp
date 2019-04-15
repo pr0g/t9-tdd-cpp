@@ -53,44 +53,40 @@ public:
 
         size_t char_index = 0;
         size_t digit_index = 0;
-        while (true) {
-            if (digit_index < digits.size()) {
-                while (true) {
-                    if (char_index < current_digit_letter->children.size()) {
-                        if (current_digit_letter->children[char_index].digit == digits[digit_index]) {
-                            word.push_back(current_digit_letter->children[char_index].letter);
-                            walked.push_back({current_digit_letter, char_index});
-                            current_digit_letter = &current_digit_letter->children[char_index];
-                            digit_index++;
+        while (digit_index < digits.size()) {
+            while (true) {
+                if (char_index < current_digit_letter->children.size()) {
+                    if (current_digit_letter->children[char_index].digit == digits[digit_index]) {
+                        word.push_back(current_digit_letter->children[char_index].letter);
+                        walked.push_back({current_digit_letter, char_index});
+                        current_digit_letter = &current_digit_letter->children[char_index];
+                        digit_index++;
 
-                            if (digit_index == digits.size()) {
-                                words.push_back(word);
-                                word.pop_back();
-                                current_digit_letter = walked.back().dl;
-                                char_index = ++walked.back().child_index;
-                                walked.pop_back();
-                                digit_index--;
-                            } else {
-                                char_index = 0;
-                                break;
-                            }
+                        if (digit_index == digits.size()) {
+                            words.push_back(word);
+                            word.pop_back();
+                            current_digit_letter = walked.back().dl;
+                            char_index = ++walked.back().child_index;
+                            walked.pop_back();
+                            digit_index--;
                         } else {
-                            char_index++;
+                            char_index = 0;
+                            break;
                         }
                     } else {
-                        if (word.empty())
-                            return words;
-
-                        word.pop_back();
-                        current_digit_letter = walked.back().dl;
-                        char_index = ++walked.back().child_index;
-                        walked.pop_back();
-                        digit_index--;
-                        break;
+                        char_index++;
                     }
+                } else {
+                    if (word.empty())
+                        return words;
+
+                    word.pop_back();
+                    current_digit_letter = walked.back().dl;
+                    char_index = ++walked.back().child_index;
+                    walked.pop_back();
+                    digit_index--;
+                    break;
                 }
-            } else {
-                break;
             }
         }
 
