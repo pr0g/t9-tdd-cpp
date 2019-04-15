@@ -54,28 +54,56 @@ public:
 //        for (size_t digit_index = 0; digit_index < digits.size(); ++digit_index) {
 //            for (size_t char_index = 0; char_index < current_digit_letter->children.size(); ++char_index) {
 
+        size_t char_index = 0;
         size_t digit_index = 0;
-        while (digit_index < digits.size()) {
-            size_t char_index = 0;
-            while (char_index < current_digit_letter->children.size()) {
-                if (current_digit_letter->children[char_index].digit == digits[digit_index]) {
-                    word.push_back(current_digit_letter->children[char_index].letter);
-                    walked.push_back({ current_digit_letter, char_index });
+        while (true) {
+            if (digit_index < digits.size()) {
+                while (true) {
+                    if (char_index < current_digit_letter->children.size()) {
+                        if (current_digit_letter->children[char_index].digit == digits[digit_index]) {
+                            word.push_back(current_digit_letter->children[char_index].letter);
+                            walked.push_back({current_digit_letter, char_index});
+                            current_digit_letter = &current_digit_letter->children[char_index];
+                            digit_index++;
 
-                    current_digit_letter = &current_digit_letter->children[char_index];
-                    break;
+                            // if (current_digit_letter->children.empty()) {
+                            if (digit_index == digits.size()) {
+                                words.push_back(word);
+                                word.pop_back();
+                                current_digit_letter = walked.back().dl;
+                                char_index = ++walked.back().child_index;
+                                walked.pop_back();
+                                digit_index--;
+                            } else {
+                                char_index = 0;
+                                break;
+                            }
+                        } else {
+                            char_index++;
+                        }
+                    } else {
+                        if (word.empty())
+                            return words;
+
+                        word.pop_back();
+                        current_digit_letter = walked.back().dl;
+                        char_index = ++walked.back().child_index;
+                        walked.pop_back();
+                        digit_index--;
+                        break;
+                    }
                 }
-
-                char_index++;
+            } else {
+                break;
             }
 
 //            if (walked.size() > 0) {
 //            }
 
-            digit_index++;
+
         }
 
-        words.push_back(word);
+
 
         return words;
     }
@@ -158,13 +186,13 @@ public:
 //     ASSERT_THAT(words, ElementsAre( "aa", "ab", "ba", "ca" ));
 // }
 
-TEST_F(T9Fixture, HelloInDictionary)
-{
-    t9.add_word("hello");
-    const auto words = t9.words_from_digits({4, 3, 5, 5, 6});
-
-    ASSERT_THAT(words, ElementsAre("hello"));
-}
+//TEST_F(T9Fixture, HelloInDictionary)
+//{
+//    t9.add_word("hello");
+//    const auto words = t9.words_from_digits({4, 3, 5, 5, 6});
+//
+//    ASSERT_THAT(words, ElementsAre("hello"));
+//}
 
 TEST_F(T9Fixture, HelloAndGekkoInDictionary)
 {
@@ -172,7 +200,26 @@ TEST_F(T9Fixture, HelloAndGekkoInDictionary)
     t9.add_word("hello");
     const auto words = t9.words_from_digits({4, 3, 5, 5, 6});
 
-    ASSERT_THAT(words, ElementsAre("hello"));
+    ASSERT_THAT(words, ElementsAre("gekko", "hello"));
+}
+
+TEST_F(T9Fixture, FourSixSixThreeWords)
+{
+    t9.add_word("gondola");
+    t9.add_word("gone");
+    t9.add_word("good");
+    t9.add_word("goof");
+    t9.add_word("home");
+    t9.add_word("hone");
+    t9.add_word("hood");
+    t9.add_word("gekko");
+    t9.add_word("hello");
+
+    const auto words = t9.words_from_digits({4, 6, 6, 3});
+
+    const auto words2 = t9.words_from_digits({4, 3, 5, 5, 6});
+
+    ASSERT_THAT(words, ElementsAre("gekko", "hello"));
 }
 
 TEST_F(T9Fixture, NumberFromLetters)
