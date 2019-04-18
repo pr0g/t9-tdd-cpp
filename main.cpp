@@ -34,76 +34,100 @@ struct DigitLetter
 
 class T9
 {
+    struct DigitLetterTouched
+    {
+        const DigitLetter* dl;
+        size_t child_index;
+    };
+
+    class Searcher
+    {
+    public:
+    private:
+
+    };
+
 public:
     std::vector<std::string> words_from_digits(
         const std::vector<size_t>& digits)
     {
-        DigitLetter* current_digit_letter = &root_;
+        const DigitLetter* current_digit_letter = &root_;
 
         std::string word;
         std::vector<std::string> words;
-
-        struct DigitLetterTouched
-        {
-            DigitLetter* dl;
-            size_t child_index;
-        };
-
         std::vector<DigitLetterTouched> walked;
 
         size_t char_index = 0;
         size_t digit_index = 0;
-        while (digit_index < digits.size()) {
-            while (char_index < current_digit_letter->children.size()) {
-                if (current_digit_letter->children[char_index].digit == digits[digit_index]) {
+        while (digit_index < digits.size())
+        {
+            while (char_index < current_digit_letter->children.size())
+            {
+                if (current_digit_letter->children[char_index].digit == digits[digit_index])
+                {
                     word.push_back(current_digit_letter->children[char_index].letter);
                     walked.push_back({current_digit_letter, char_index});
                     current_digit_letter = &current_digit_letter->children[char_index];
                     digit_index++;
 
-                    if (digit_index == digits.size()) {
+                    if (digit_index == digits.size())
+                    {
                         words.push_back(word);
-                        word.pop_back();
-                        current_digit_letter = walked.back().dl;
-                        char_index = ++walked.back().child_index;
-                        walked.pop_back();
-                        digit_index--;
-                    } else {
+                        backtrack(word, &current_digit_letter, walked, char_index, digit_index);
+                    }
+                    else
+                    {
                         char_index = 0;
                     }
-                } else {
+                }
+                else
+                {
                     char_index++;
                 }
             }
 
             if (word.empty())
+            {
                 return words;
+            }
 
-            word.pop_back();
-            current_digit_letter = walked.back().dl;
-            char_index = ++walked.back().child_index;
-            walked.pop_back();
-            digit_index--;
+            backtrack(word, &current_digit_letter, walked, char_index, digit_index);
         }
 
         return words;
     }
 
+    static void backtrack(
+        std::string& word, const DigitLetter** current_digit_letter,
+        std::vector<DigitLetterTouched>& walked, size_t& char_index,
+        size_t& digit_index)
+    {
+        word.pop_back();
+        *current_digit_letter = walked.back().dl;
+        char_index = ++walked.back().child_index;
+        walked.pop_back();
+        digit_index--;
+    }
+
     void add_word(const std::string& word)
     {
         DigitLetter* current = &root_;
-        for (char char_index : word) {
+        for (char char_index : word)
+        {
             auto digitLetter = std::find_if(
                 current->children.begin(), current->children.end(),
                 [&word, &char_index](const auto& digit_letter) {
                     return digit_letter.letter == char_index;
                 });
 
-            if (digitLetter == current->children.end()) {
+            if (digitLetter == current->children.end())
+            {
                 current = &current->children.emplace_back(
                     number_from_letter(char_index), char_index,
                     std::vector<DigitLetter>{});
-            } else {
+            }
+            else
+            {
                 current = &*digitLetter;
             }
         }
@@ -122,39 +146,40 @@ private:
     DigitLetter root_;
 };
 
-class T9Fixture : public Test
+class T9Fixture
+    : public Test
 {
 public:
     T9 t9;
 };
 
- TEST_F(T9Fixture, SingleDigitTwoGivesABC)
- {
-     t9.add_word("ask");
-     t9.add_word("ball");
-     t9.add_word("cat");
-     const auto words = t9.words_from_digits( { 2 } );
-     ASSERT_THAT(words, ElementsAre( "a", "b", "c" ));
- }
+TEST_F(T9Fixture, SingleDigitTwoGivesABC)
+{
+    t9.add_word("ask");
+    t9.add_word("ball");
+    t9.add_word("cat");
+    const auto words = t9.words_from_digits({2});
+    ASSERT_THAT(words, ElementsAre("a", "b", "c"));
+}
 
- TEST_F(T9Fixture, SingleDigitThreeGivesDEF)
- {
-     t9.add_word("dent");
-     t9.add_word("east");
-     t9.add_word("fast");
-     const auto words = t9.words_from_digits( { 3 } );
-     ASSERT_THAT(words, ElementsAre( "d", "e", "f" ));
- }
+TEST_F(T9Fixture, SingleDigitThreeGivesDEF)
+{
+    t9.add_word("dent");
+    t9.add_word("east");
+    t9.add_word("fast");
+    const auto words = t9.words_from_digits({3});
+    ASSERT_THAT(words, ElementsAre("d", "e", "f"));
+}
 
- TEST_F(T9Fixture, DoubleDigitTwoGivesAAABBACBACA)
- {
-     t9.add_word("aardvark");
-     t9.add_word("abacus");
-     t9.add_word("ball");
-     t9.add_word("cat");
-     const auto words = t9.words_from_digits( { 2, 2 } );
-     ASSERT_THAT(words, ElementsAre( "aa", "ab", "ba", "ca" ));
- }
+TEST_F(T9Fixture, DoubleDigitTwoGivesAAABBACBACA)
+{
+    t9.add_word("aardvark");
+    t9.add_word("abacus");
+    t9.add_word("ball");
+    t9.add_word("cat");
+    const auto words = t9.words_from_digits({2, 2});
+    ASSERT_THAT(words, ElementsAre("aa", "ab", "ba", "ca"));
+}
 
 TEST_F(T9Fixture, HelloInDictionary)
 {
@@ -167,6 +192,7 @@ TEST_F(T9Fixture, HelloInDictionary)
 TEST_F(T9Fixture, HelloAndGekkoInDictionary)
 {
     t9.add_word("gekko");
+    t9.add_word("hello");
     t9.add_word("hello");
     const auto words = t9.words_from_digits({4, 3, 5, 5, 6});
 
@@ -201,16 +227,35 @@ TEST_F(T9Fixture, NumberFromLetters)
     };
 
     const NumberLetterPair valid_pairs[] = {
-        {2, 'a'}, {2, 'b'}, {2, 'c'},
-        {3, 'd'}, {3, 'e'}, {3, 'f'},
-        {4, 'g'}, {4, 'h'}, {4, 'i'},
-        {5, 'j'}, {5, 'k'}, {5, 'l'},
-        {6, 'm'}, {6, 'n'}, {6, 'o'},
-        {7, 'p'}, {7, 'q'}, {7, 'r'}, {7, 's'},
-        {8, 't'}, {8, 'u'}, {8, 'v'},
-        {9, 'w'}, {9, 'x'}, {9, 'y'}, {9, 'z'}};
+        {2, 'a'},
+        {2, 'b'},
+        {2, 'c'},
+        {3, 'd'},
+        {3, 'e'},
+        {3, 'f'},
+        {4, 'g'},
+        {4, 'h'},
+        {4, 'i'},
+        {5, 'j'},
+        {5, 'k'},
+        {5, 'l'},
+        {6, 'm'},
+        {6, 'n'},
+        {6, 'o'},
+        {7, 'p'},
+        {7, 'q'},
+        {7, 'r'},
+        {7, 's'},
+        {8, 't'},
+        {8, 'u'},
+        {8, 'v'},
+        {9, 'w'},
+        {9, 'x'},
+        {9, 'y'},
+        {9, 'z'}};
 
-    for (const auto pair : valid_pairs) {
+    for (const auto pair : valid_pairs)
+    {
         ASSERT_THAT(t9.number_from_letter(pair.letter), Eq(pair.number));
     }
 }
