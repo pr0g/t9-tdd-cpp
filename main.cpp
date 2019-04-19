@@ -16,13 +16,10 @@ int main(int argc, char** argv)
 /// 4 ghi  5 jkl 6 mno
 /// 7 pqrs 8 tuv 9 wxyz
 
-// could use inheritance?
-
 struct DigitLetter
 {
     DigitLetter() = default;
-
-    DigitLetter(
+    DigitLetter( // used by emplace_back
         int8_t digit_, int8_t letter_, std::vector<DigitLetter> children_)
         : digit(digit_), letter(letter_), children(std::move(children_))
     {}
@@ -36,77 +33,110 @@ class T9
 {
     struct DigitLetterTouched
     {
-        const DigitLetter* dl;
-        size_t child_index;
+        const DigitLetter* digit_letter_;
+        size_t child_index_;
     };
 
     class Searcher
     {
     public:
-    private:
+        explicit Searcher(
+            const DigitLetter* root, const std::vector<size_t>& digits)
+            : current_digit_letter_(root), digits_(&digits)
+        {}
 
+        std::vector<std::string> words()
+        {
+            while (digits_left())
+            {
+                while (characters_left())
+                {
+                    if (matching_digit())
+                    {
+                        append_letter();
+                        record_visited();
+                        descend_next_digit_letter();
+                        try_record_word();
+                    }
+                    else
+                    {
+                        next_char_index();
+                    }
+                }
+
+                if (word_.empty())
+                {
+                    break;
+                }
+
+                backtrack();
+            }
+
+            return words_;
+        }
+
+    private:
+        bool digits_left() const { return digit_index_ < digits_->size(); }
+        bool characters_left() const { return char_index_ < current_digit_letter_->children.size(); }
+        bool matching_digit() const { return current_digit_letter_->children[char_index_].digit == (*digits_)[digit_index_]; }
+        bool end_of_sequence() const { return digit_index_ == digits_->size(); }
+
+        void append_letter() { word_.push_back(current_digit_letter_->children[char_index_].letter); }
+        void record_visited() { visited_.push_back({current_digit_letter_, char_index_}); }
+
+        void descend_next_digit_letter()
+        {
+            current_digit_letter_ = &current_digit_letter_->children[char_index_];
+            digit_index_++;
+        }
+
+        void ascend_next_digit_letter()
+        {
+            current_digit_letter_ = visited_.back().digit_letter_;
+            char_index_ = ++visited_.back().child_index_;
+            visited_.pop_back();
+            digit_index_--;
+        }
+
+        void record_word() { words_.push_back(word_); }
+        void reset_char_index() { char_index_ = 0; }
+        void next_char_index() { char_index_++; }
+        void remove_last_letter() { word_.pop_back(); }
+
+        void try_record_word()
+        {
+            if (end_of_sequence())
+            {
+                record_word();
+            }
+            else
+            {
+                reset_char_index();
+            }
+        }
+
+        void backtrack()
+        {
+            remove_last_letter();
+            ascend_next_digit_letter();
+        }
+
+    private:
+        const DigitLetter* current_digit_letter_ = nullptr;
+        const std::vector<size_t>* digits_;
+        std::vector<std::string> words_;
+        std::vector<DigitLetterTouched> visited_;
+        std::string word_;
+        size_t char_index_ = 0;
+        size_t digit_index_ = 0;
     };
 
 public:
     std::vector<std::string> words_from_digits(
         const std::vector<size_t>& digits)
     {
-        const DigitLetter* current_digit_letter = &root_;
-
-        std::string word;
-        std::vector<std::string> words;
-        std::vector<DigitLetterTouched> walked;
-
-        size_t char_index = 0;
-        size_t digit_index = 0;
-        while (digit_index < digits.size())
-        {
-            while (char_index < current_digit_letter->children.size())
-            {
-                if (current_digit_letter->children[char_index].digit == digits[digit_index])
-                {
-                    word.push_back(current_digit_letter->children[char_index].letter);
-                    walked.push_back({current_digit_letter, char_index});
-                    current_digit_letter = &current_digit_letter->children[char_index];
-                    digit_index++;
-
-                    if (digit_index == digits.size())
-                    {
-                        words.push_back(word);
-                        backtrack(word, &current_digit_letter, walked, char_index, digit_index);
-                    }
-                    else
-                    {
-                        char_index = 0;
-                    }
-                }
-                else
-                {
-                    char_index++;
-                }
-            }
-
-            if (word.empty())
-            {
-                return words;
-            }
-
-            backtrack(word, &current_digit_letter, walked, char_index, digit_index);
-        }
-
-        return words;
-    }
-
-    static void backtrack(
-        std::string& word, const DigitLetter** current_digit_letter,
-        std::vector<DigitLetterTouched>& walked, size_t& char_index,
-        size_t& digit_index)
-    {
-        word.pop_back();
-        *current_digit_letter = walked.back().dl;
-        char_index = ++walked.back().child_index;
-        walked.pop_back();
-        digit_index--;
+        Searcher searcher(&root_, digits);
+        return searcher.words();
     }
 
     void add_word(const std::string& word)
