@@ -238,14 +238,18 @@ TEST_F(T9Fixture, FourSixSixThreeWords)
     t9.add_word("home");
     t9.add_word("hone");
     t9.add_word("hood");
+
+    const auto words = t9.words_from_digits({4, 6, 6, 3});
+    ASSERT_THAT(words, ElementsAre("gond", "gone", "good", "goof", "home", "hone", "hood"));
+}
+
+TEST_F(T9Fixture, FourThreeFiveFiveSixWords)
+{
     t9.add_word("gekko");
     t9.add_word("hello");
 
-    const auto words = t9.words_from_digits({4, 6, 6, 3});
-
-    const auto words2 = t9.words_from_digits({4, 3, 5, 5, 6});
-
-    //ASSERT_THAT(words, ElementsAre("gekko", "hello"));
+    const auto words = t9.words_from_digits({4, 3, 5, 5, 6});
+    ASSERT_THAT(words, ElementsAre("gekko", "hello"));
 }
 
 TEST_F(T9Fixture, NumberFromLetters)
